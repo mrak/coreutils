@@ -1,0 +1,15 @@
+[package]
+
+name = "coreutils"
+version = "0.0.1"
+authors = ["Eric Mrak <mail@ericmrak.info>"]
+
+[[bin]]
+
+name = "tr"
+path = "src/tr/tr.rs"
+
+[[bin]]
+
+name = "wc"
+path = "src/wc/wc.rs"
