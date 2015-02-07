@@ -34,14 +34,32 @@ fn main() {
         print!("{}", usage);
     }
 
+    if (!matches.opt_present("d") && matches.free.len() != 2) {
+        println!("SET1 and SET2 are required for translation.");
+        println!("");
+        print!("{}", usage);
+        return;
+    }
+
+    if matches.opt_present("s") {
+        if matches.opt_present("d") && matches.free.len() == 1 {
+            println!("Two strings must be given when both deleting and squeezing repeats.");
+            println!("");
+            print!("{}", usage);
+            return;
+        }
+    }
+
     tr(&matches);
 }
 
 fn tr(matches: &Matches) {
     let delete_flag: bool = matches.opt_present("d");
-    let squeeze_flag: bool = matches.opt_present("s");
     let complement_flag: bool = matches.opts_present(&["c".to_string(), "C".to_string()]);
     //let truncate_flag: bool = matches.opt_present("t");
+    let translating: bool = !matches.opt_present("d") && matches.free.len() == 2;
+    let deleting: bool = matches.opt_present("d");
+    let squeezing: bool = matches.opt_present("s");
 
     let set1 = Arc::new(match matches.free.first() {
         Some(s) => s.clone(),
@@ -52,8 +70,13 @@ fn tr(matches: &Matches) {
         None => String::new()
     });
 
-    let delete_set = set1.clone();
-    let squeeze_set = if delete_flag { set2.clone() } else { set1.clone() };
+    let first_set = set1.clone();
+    let translation_set = set2.clone();
+    let (squeeze_set, squeeze_complement) = if !delete_flag && matches.free.len() == 1 {
+        (set1.clone(), complement_flag)
+    } else {
+        (set2.clone(), false)
+    };
 
     let guard = taskpipe::input(|tx: Sender<char>| {
         let mut input = stdin();
@@ -65,19 +88,20 @@ fn tr(matches: &Matches) {
             };
         };
     }).pipe(move |rx: Receiver<char>, tx: Sender<char> | {
-        if delete_flag {
-            for c in rx.iter() {
-                if !complement_flag {
-                    if delete_set.chars().any(|s| { s == c }) {
-                        continue;
-                    }
-                } else {
-                    if !delete_set.chars().any(|s| { s == c }) {
-                        continue;
+        if deleting {
+            // deleting
+            if complement_flag {
+                for c in rx.iter() {
+                    if first_set.chars().any(|s| { s == c }) {
+                        tx.send(c).unwrap();
                     }
                 }
-
-                tx.send(c).unwrap();
+            } else {
+                for c in rx.iter() {
+                    if !first_set.chars().any(|s| { s == c }) {
+                        tx.send(c).unwrap();
+                    }
+                }
             }
         } else {
             pump(&rx, &tx);
@@ -85,7 +109,8 @@ fn tr(matches: &Matches) {
     }).pipe(move |rx: Receiver<char>, tx: Sender<char> | {
         let mut itr = rx.iter();
 
-        if squeeze_flag {
+        if squeezing {
+            // sqeezing
             let mut last = itr.next().unwrap();
             tx.send(last).unwrap();
 
