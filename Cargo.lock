@@ -1,4 +1,12 @@
 [root]
 name = "coreutils"
 version = "0.0.1"
+dependencies = [
+ "taskpipe 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "taskpipe"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 

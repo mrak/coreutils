@@ -13,3 +13,6 @@ path = "src/tr/tr.rs"
 
 name = "wc"
 path = "src/wc/wc.rs"
+
+[dependencies]
+taskpipe = "0.1.2"
