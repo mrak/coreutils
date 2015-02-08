@@ -29,3 +29,8 @@ Complementary squeezing
 
   $ printf "delete     part    of      meeeeeeeeeeeeeeeeeeee" | ${TESTDIR}/../../target/tr -cs me
   delete part of meeeeeeeeeeeeeeeeeeee (no-eol)
+
+Translation
+
+  $ printf "delete     part    of      meeeeeeeeeeeeeeeeeeee" | ${TESTDIR}/../../target/tr meda op
+  pplptp     pprt    of      opppppppppppppppppppp (no-eol)

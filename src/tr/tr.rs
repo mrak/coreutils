@@ -66,22 +66,27 @@ fn tr(matches: &Matches) {
         None => String::new()
     });
     let set1_len = set1.as_slice().chars().count();
-    let set2 = Arc::new(match matches.free.get(1) {
+    let mut set2 = Arc::new(match matches.free.get(1) {
         Some(s) => s.clone(),
         None => String::new()
     });
     let set2_len = set2.as_slice().chars().count();
 
-    //if translating && truncate_flag && set1_len > set2_len {
-        //set1 = Arc::new(set1.as_slice().chars().take(set2_len).collect());
-    //} else if set2_len > set1_len {
-        //let last = set1.as_slice().chars().last();
-        //set1 = Arc::new(set1.as_slice().chain(range(1, set2_len - set1_len).map(|x| last))
-                            //.collect());
-    //}
+    if translating && truncate_flag && set1_len > set2_len {
+        set1 = Arc::new(set1.as_slice()
+                            .chars()
+                            .take(set2_len)
+                            .collect());
+    } else if translating && set1_len > set2_len {
+        let last = set2.as_slice().chars().last().unwrap();
+        set2 = Arc::new(set2.as_slice()
+                            .chars()
+                            .chain(range(0, set1_len - set2_len).map(|_| last))
+                            .collect());
+    }
 
     let first_set = set1.clone();
-    //let translation_set = set2.clone();
+    let translation_set = set2.clone();
     let (squeeze_set, squeeze_complement) = if !delete_flag && matches.free.len() == 1 {
         (set1.clone(), complement_flag)
     } else {
@@ -113,8 +118,17 @@ fn tr(matches: &Matches) {
                     }
                 }
             }
-        } else {
+        } else if translating {
             // translating
+            for c in rx.iter() {
+                match first_set.chars().position(|s| { s == c }) {
+                    Some(i) => {
+                        tx.send(translation_set.chars().nth(i).unwrap()).unwrap()
+                    },
+                    None => tx.send(c).unwrap()
+                }
+            }
+        } else {
             pump(&rx, &tx);
         }
     }).pipe(move |rx: Receiver<char>, tx: Sender<char> | {
