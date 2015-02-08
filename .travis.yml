@@ -1,0 +1,6 @@
+language: rust
+before_script:
+  - pip install cram
+script:
+  - cargo test --verbose
+  - cram tests

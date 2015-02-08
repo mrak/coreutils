@@ -34,7 +34,7 @@ fn main() {
         print!("{}", usage);
     }
 
-    if (!matches.opt_present("d") && matches.free.len() != 2) {
+    if !matches.opt_present("s") && !matches.opt_present("d") && matches.free.len() != 2 {
         println!("SET1 and SET2 are required for translation.");
         println!("");
         print!("{}", usage);
@@ -56,22 +56,32 @@ fn main() {
 fn tr(matches: &Matches) {
     let delete_flag: bool = matches.opt_present("d");
     let complement_flag: bool = matches.opts_present(&["c".to_string(), "C".to_string()]);
-    //let truncate_flag: bool = matches.opt_present("t");
+    let truncate_flag: bool = matches.opt_present("t");
     let translating: bool = !matches.opt_present("d") && matches.free.len() == 2;
     let deleting: bool = matches.opt_present("d");
     let squeezing: bool = matches.opt_present("s");
 
-    let set1 = Arc::new(match matches.free.first() {
+    let mut set1 = Arc::new(match matches.free.first() {
         Some(s) => s.clone(),
         None => String::new()
     });
+    let set1_len = set1.as_slice().chars().count();
     let set2 = Arc::new(match matches.free.get(1) {
         Some(s) => s.clone(),
         None => String::new()
     });
+    let set2_len = set2.as_slice().chars().count();
+
+    //if translating && truncate_flag && set1_len > set2_len {
+        //set1 = Arc::new(set1.as_slice().chars().take(set2_len).collect());
+    //} else if set2_len > set1_len {
+        //let last = set1.as_slice().chars().last();
+        //set1 = Arc::new(set1.as_slice().chain(range(1, set2_len - set1_len).map(|x| last))
+                            //.collect());
+    //}
 
     let first_set = set1.clone();
-    let translation_set = set2.clone();
+    //let translation_set = set2.clone();
     let (squeeze_set, squeeze_complement) = if !delete_flag && matches.free.len() == 1 {
         (set1.clone(), complement_flag)
     } else {
@@ -104,6 +114,7 @@ fn tr(matches: &Matches) {
                 }
             }
         } else {
+            // translating
             pump(&rx, &tx);
         }
     }).pipe(move |rx: Receiver<char>, tx: Sender<char> | {
@@ -114,12 +125,24 @@ fn tr(matches: &Matches) {
             let mut last = itr.next().unwrap();
             tx.send(last).unwrap();
 
-            for c in itr {
-                if c == last && squeeze_set.chars().any(|s| { s == c }) {
-                    continue;
+            if squeeze_complement {
+                for c in itr {
+                    if c == last && !squeeze_set.chars().any(|s| { s == c }) {
+                        continue;
+                    } else {
+                        tx.send(c).unwrap();
+                    }
+                    last = c;
                 }
-                tx.send(c).unwrap();
-                last = c;
+            } else {
+                for c in itr {
+                    if c == last && squeeze_set.chars().any(|s| { s == c }) {
+                        continue;
+                    } else {
+                        tx.send(c).unwrap();
+                    }
+                    last = c;
+                }
             }
         } else {
             pump(&rx, &tx);
