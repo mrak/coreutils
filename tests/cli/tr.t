@@ -30,7 +30,12 @@ Complementary squeezing
   $ printf "delete     part    of      meeeeeeeeeeeeeeeeeeee" | ${TESTDIR}/../../target/tr -cs me
   delete part of meeeeeeeeeeeeeeeeeeee (no-eol)
 
-Translation
+Translation with extending SET2
 
   $ printf "delete     part    of      meeeeeeeeeeeeeeeeeeee" | ${TESTDIR}/../../target/tr meda op
   pplptp     pprt    of      opppppppppppppppppppp (no-eol)
+
+Translation with truncation of SET1
+
+  $ printf "delete     part    of      meeeeeeeeeeeeeeeeeeee" | ${TESTDIR}/../../target/tr -t meda op
+  dplptp     part    of      opppppppppppppppppppp (no-eol)
