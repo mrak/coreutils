@@ -8,5 +8,6 @@ install:
   - pip install --user cram
 
 script:
+  - cargo build --release
   - cargo test --verbose
   - $HOME/.local/bin/cram tests/cli
