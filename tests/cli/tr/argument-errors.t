@@ -14,6 +14,7 @@
                           that character
       -t, --truncate-set1  (glob)
                           first truncate SET1 to length of SET2
+      -h, --help          display this help and exit
 
   $ $PROGRAM set1
   SET1 and SET2 are required for translation.
@@ -29,6 +30,7 @@
                           that character
       -t, --truncate-set1  (glob)
                           first truncate SET1 to length of SET2
+      -h, --help          display this help and exit
 
   $ $PROGRAM -t set1
   -t may only be used when translating.
@@ -44,6 +46,7 @@
                           that character
       -t, --truncate-set1  (glob)
                           first truncate SET1 to length of SET2
+      -h, --help          display this help and exit
 
   $ $PROGRAM -ds set1
   Two strings must be given when both deleting and squeezing repeats.
@@ -59,6 +62,7 @@
                           that character
       -t, --truncate-set1  (glob)
                           first truncate SET1 to length of SET2
+      -h, --help          display this help and exit
 
   $ $PROGRAM -z set1
   Unrecognized option: 'z'.
@@ -74,3 +78,4 @@
                           that character
       -t, --truncate-set1  (glob)
                           first truncate SET1 to length of SET2
+      -h, --help          display this help and exit
