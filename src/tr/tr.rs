@@ -12,7 +12,7 @@ enum Mode {
 
 struct Arguments {
     mode: Mode,
-    squeezing: [bool; 256],
+    squeezings: [bool; 256],
 }
 
 fn main() {
@@ -101,6 +101,8 @@ fn parse_arguments() -> Option<Arguments> {
         }
     }
 
+    let mut squeezings = [false; 256];
+
     let mode = if delete_flag {
         let value = matches.opt_present("c") || matches.opt_present ("C");
         let mut deletions = [value; 256];
@@ -127,11 +129,25 @@ fn parse_arguments() -> Option<Arguments> {
         Mode::Noop
     };
 
-    let squeezing = [false; 256];
+    if matches.opt_present("s") {
+        match mode {
+            Mode::Noop => {
+                for b in set1.as_bytes().into_iter() {
+                    squeezings[*b as usize] = true;
+                }
+            },
+            _ => {
+                for b in set2.as_ref().unwrap().as_bytes().into_iter() {
+                    squeezings[*b as usize] = true;
+                }
+            }
+        }
+    }
+
 
     Some(Arguments {
         mode: mode,
-        squeezing: squeezing,
+        squeezings: squeezings,
     })
 }
 
@@ -148,41 +164,93 @@ fn print_usage_error(opts: &Options, error: &str) {
 
 fn tr(arguments: &Arguments) {
     match arguments.mode {
-        Mode::Deleting(ds) => delete(&ds),
-        Mode::Translating(ts) => translate(&ts),
-        Mode::Noop => (),
+        Mode::Deleting(ds) => delete(&ds, &arguments.squeezings),
+        Mode::Translating(ts) => translate(&ts, &arguments.squeezings),
+        Mode::Noop => squeeze(&arguments.squeezings),
     };
 }
 
-fn delete(deletions: &[bool; 256]) {
+fn squeeze(squeezings: &[bool; 256]) {
     let out_unlocked = stdout();
     let mut out = out_unlocked.lock();
     let input_unlocked = stdin();
     let input = input_unlocked.lock();
+    let mut last: Option<u8> = None;
 
     for byte in input.bytes() {
         match byte {
             Err(_) => return,
             Ok(b) => {
-                if !deletions[b as usize] {
-                    out.write(&[b]).unwrap();
+                match last {
+                    None => (),
+                    Some(l) => {
+                        if b == l && squeezings[b as usize] {
+                            continue;
+                        }
+                    },
                 }
+
+                out.write(&[b]).unwrap();
+                last = Some(b);
             },
         };
     };
 }
 
-fn translate(translations: &[u8; 256]) {
+fn delete(deletions: &[bool; 256], squeezings: &[bool; 256]) {
     let out_unlocked = stdout();
     let mut out = out_unlocked.lock();
     let input_unlocked = stdin();
     let input = input_unlocked.lock();
+    let mut last: Option<u8> = None;
 
     for byte in input.bytes() {
         match byte {
             Err(_) => return,
             Ok(b) => {
+                if deletions[b as usize] {
+                    continue;
+                }
+
+                match last {
+                    None => (),
+                    Some(l) => {
+                        if b == l && squeezings[b as usize] {
+                            continue;
+                        }
+                    },
+                }
+
+                out.write(&[b]).unwrap();
+                last = Some(b);
+            },
+        };
+    };
+}
+
+fn translate(translations: &[u8; 256], squeezings: &[bool; 256]) {
+    let out_unlocked = stdout();
+    let mut out = out_unlocked.lock();
+    let input_unlocked = stdin();
+    let input = input_unlocked.lock();
+    let mut last: Option<u8> = None;
+
+    for byte in input.bytes() {
+        match byte {
+            Err(_) => return,
+            Ok(b) => {
+
+                match last {
+                    None => (),
+                    Some(l) => {
+                        if b == l && squeezings[b as usize] {
+                            continue;
+                        }
+                    },
+                }
+
                 out.write(&[translations[b as usize]]).unwrap();
+                last = Some(b);
             },
         };
     };
